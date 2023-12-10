@@ -1,4 +1,6 @@
 (ANSWER-01)
+
+
 import pandas as pd
 
 def generate_car_matrix():
@@ -16,6 +18,8 @@ def generate_car_matrix():
 
 
 (ANSWER-02)
+
+
 import pandas as pd
 
 def get_type_count(df):
@@ -25,24 +29,68 @@ def get_type_count(df):
     return sorted_type_count
 
 
+(ANSWER-03)
+
+def get_bus_indexes(data):
+    mean_value = data['bus'].mean()
+    bus_indexes = data[data['bus'] > 2 * mean_value].index.tolist()
+    return sorted(bus_indexes)
+
+
+(ANSWR-04)
+
+def multiply_matrix(df):
+    df = df.applymap(lambda x: x * 0.75 if x > 20 else x * 1.25)
+    df = df.round(1)
+    return df
+
+
+(ANSWER-05)
+
+def multiply_matrix(df):
+    df = df.applymap(lambda x: x * 0.75 if x > 20 else x * 1.25)
+    df = df.round(1)
+    return df
 
 
 
-ANSWER-06
+(ANSWER-06)
+
 import pandas as pd
+import datetime
 
-def unroll_distance_matrix(df):
-    id_start = []
-    id_end = []
-    distance = []
+def calculate_time_based_toll_rates(dataframe):
+    # Define time ranges
+    weekday_morning_start = datetime.time(0, 0, 0)
+    weekday_morning_end = datetime.time(10, 0, 0)
+    weekday_afternoon_start = datetime.time(10, 0, 0)
+    weekday_afternoon_end = datetime.time(18, 0, 0)
+    weekday_evening_start = datetime.time(18, 0, 0)
+    weekday_evening_end = datetime.time(23, 59, 59)
+    weekend_start = datetime.time(0, 0, 0)
+    weekend_end = datetime.time(23, 59, 59)
+    
+    # Create new columns for start_day, start_time, end_day, and end_time
+    dataframe['start_day'] = dataframe['id_start'].apply(lambda x: x.strftime('%A'))
+    dataframe['start_time'] = dataframe['id_start'].apply(lambda x: x.time())
+    dataframe['end_day'] = dataframe['id_end'].apply(lambda x: x.strftime('%A'))
+    dataframe['end_time'] = dataframe['id_end'].apply(lambda x: x.time())
+    
+    # Apply discount factors based on time ranges
+    dataframe.loc[(dataframe['start_day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & 
+                  (dataframe['start_time'] >= weekday_morning_start) & 
+                  (dataframe['start_time'] < weekday_morning_end), 'vehicle'] *= 0.8
+    
+    dataframe.loc[(dataframe['start_day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & 
+                  (dataframe['start_time'] >= weekday_afternoon_start) & 
+                  (dataframe['start_time'] < weekday_afternoon_end), 'vehicle'] *= 1.2
+    
+    dataframe.loc[(dataframe['start_day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & 
+                  (dataframe['start_time'] >= weekday_evening_start) & 
+                  (dataframe['start_time'] <= weekday_evening_end), 'vehicle'] *= 0.8
+    
+    dataframe.loc[(dataframe['start_day'].isin(['Saturday', 'Sunday'])), 'vehicle'] *= 0.7
+    
+    return dataframe
 
-    for i in range(len(df)):
-        for j in range(len(df)):
-            if df['id'][i] != df['id'][j]:
-                id_start.append(df['id'][i])
-                id_end.append(df['id'][j])
-                distance.append(df['distance'][i])
-
-    unrolled_df = pd.DataFrame({'id_start': id_start, 'id_end': id_end, 'distance': distance})
-    return unrolled_df
 
