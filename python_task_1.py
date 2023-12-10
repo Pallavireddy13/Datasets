@@ -37,7 +37,7 @@ def get_bus_indexes(data):
     return sorted(bus_indexes)
 
 
-(ANSWR-04)
+(ANSWER-04)
 
 def multiply_matrix(df):
     df = df.applymap(lambda x: x * 0.75 if x > 20 else x * 1.25)
@@ -56,41 +56,23 @@ def multiply_matrix(df):
 
 (ANSWER-06)
 
-import pandas as pd
-import datetime
 
-def calculate_time_based_toll_rates(dataframe):
-    # Define time ranges
-    weekday_morning_start = datetime.time(0, 0, 0)
-    weekday_morning_end = datetime.time(10, 0, 0)
-    weekday_afternoon_start = datetime.time(10, 0, 0)
-    weekday_afternoon_end = datetime.time(18, 0, 0)
-    weekday_evening_start = datetime.time(18, 0, 0)
-    weekday_evening_end = datetime.time(23, 59, 59)
-    weekend_start = datetime.time(0, 0, 0)
-    weekend_end = datetime.time(23, 59, 59)
+import pandas as pd
+
+def verify_timestamp_completeness(data):
+    # Convert timestamp columns to datetime
+    data['timestamp'] = pd.to_datetime(data['timestamp'])
     
-    # Create new columns for start_day, start_time, end_day, and end_time
-    dataframe['start_day'] = dataframe['id_start'].apply(lambda x: x.strftime('%A'))
-    dataframe['start_time'] = dataframe['id_start'].apply(lambda x: x.time())
-    dataframe['end_day'] = dataframe['id_end'].apply(lambda x: x.strftime('%A'))
-    dataframe['end_time'] = dataframe['id_end'].apply(lambda x: x.time())
+    # Group by (id, id_2) pairs
+    grouped_data = data.groupby(['id', 'id_2'])
     
-    # Apply discount factors based on time ranges
-    dataframe.loc[(dataframe['start_day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & 
-                  (dataframe['start_time'] >= weekday_morning_start) & 
-                  (dataframe['start_time'] < weekday_morning_end), 'vehicle'] *= 0.8
+    # Check if each group has incorrect timestamps
+    completeness_check = grouped_data.apply(lambda x: 
+        (x['timestamp'].min().time() != pd.Timestamp('00:00:00').time()) or
+        (x['timestamp'].max().time() != pd.Timestamp('23:59:59').time()) or
+        (x['timestamp'].dt.dayofweek.nunique() != 7)
+    )
     
-    dataframe.loc[(dataframe['start_day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & 
-                  (dataframe['start_time'] >= weekday_afternoon_start) & 
-                  (dataframe['start_time'] < weekday_afternoon_end), 'vehicle'] *= 1.2
-    
-    dataframe.loc[(dataframe['start_day'].isin(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])) & 
-                  (dataframe['start_time'] >= weekday_evening_start) & 
-                  (dataframe['start_time'] <= weekday_evening_end), 'vehicle'] *= 0.8
-    
-    dataframe.loc[(dataframe['start_day'].isin(['Saturday', 'Sunday'])), 'vehicle'] *= 0.7
-    
-    return dataframe
+    return completeness_check
 
 
